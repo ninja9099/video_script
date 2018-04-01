@@ -51,20 +51,22 @@ if __name__ == '__main__':
     print username, password
     url = 'http://date.jsontest.com'
     current_response = fetch_data(url)
-    p = multiprocessing.Process(target=coil, name="coil", args=(current_response,))
-    p.start()
+    video_process = multiprocessing.Process(target=coil, name="coil", args=(current_response,))
+    video_process.start()
+    import pdb
+    pdb.set_trace()
     while True:
         resource =fetch_data(url)
         old_time = datetime.strptime(current_response.date, '%m-%d-%Y')
         new_time = datetime.strptime(resource.date, '%m-%d-%Y') 
+        print old_time, new_time
         if new_time > old_time:
-            print old_time, new_time
-            if p.is_alive():
-                p.terminate()
-                p.join()
+            if video_process.is_alive():
+                video_process.terminate()
+                video_process.join()
             current_response = resource
-            p = multiprocessing.Process(target=coil, name="coil", args=(current_response,))
-            p.start()
+            video_process = multiprocessing.Process(target=coil, name="coil", args=(current_response,))
+            video_process.start()
             time.sleep(10)
             print 'sleeping master process lets slave continues to do his work'
         else:
