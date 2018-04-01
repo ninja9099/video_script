@@ -3,11 +3,11 @@ import time
 import json
 import getpass
 import urllib2
-import datetime
 import multiprocessing
 import numpy as np
 import cv2
 
+from datetime import datetime
 
 
 video_queue = ["3.flv", "1.mp4","2.flv"]
@@ -48,13 +48,17 @@ def fetch_data(url):
 if __name__ == '__main__':
     username = raw_input('enter Username: ')
     password = getpass.getpass('Password: ')
+    print username, password
     url = 'http://date.jsontest.com'
     current_response = fetch_data(url)
     p = multiprocessing.Process(target=coil, name="coil", args=(current_response,))
     p.start()
-    while False:
+    while True:
         resource =fetch_data(url)
-        if True:
+        old_time = datetime.strptime(current_response.date, '%m-%d-%Y')
+        new_time = datetime.strptime(resource.date, '%m-%d-%Y') 
+        if new_time > old_time:
+            print old_time, new_time
             if p.is_alive():
                 p.terminate()
                 p.join()
