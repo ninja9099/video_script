@@ -1,16 +1,16 @@
-
-import json
+import sys
 import time
+import json
+import getpass
 import urllib2
 import datetime
 import multiprocessing
-
 import numpy as np
 import cv2
 
 
 
-video_queue = ["1.mp4","2.flv","3.flv"]
+video_queue = ["3.flv", "1.mp4","2.flv"]
 
 def coil(Schedular):
     while True:
@@ -46,18 +46,19 @@ def fetch_data(url):
 
 
 if __name__ == '__main__':
+    username = raw_input('enter Username: ')
+    password = getpass.getpass('Password: ')
     url = 'http://date.jsontest.com'
     current_response = fetch_data(url)
     p = multiprocessing.Process(target=coil, name="coil", args=(current_response,))
     p.start()
-    while True:
+    while False:
         resource =fetch_data(url)
         if True:
             if p.is_alive():
                 p.terminate()
                 p.join()
             current_response = resource
-
             p = multiprocessing.Process(target=coil, name="coil", args=(current_response,))
             p.start()
             time.sleep(10)
