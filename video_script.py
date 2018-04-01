@@ -20,9 +20,9 @@ def coil(Schedular):
                 ret, frame = cap.read()
                 if ret == True:
                     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    # cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
+                    cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
                     cv2.setWindowProperty("window",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
-                    cv2.imshow('frame', frame)
+                    cv2.imshow('window', frame)
                     # & 0xFF is required for a 64-bit system
                     if cv2.waitKey(30) & 0xFF == ord('q'):
                         break
