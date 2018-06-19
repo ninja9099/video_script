@@ -39,15 +39,16 @@ def internet_on():
 
 def video_download_helper(q, actions):
     print "actions are ====> ", actions
-    paths = ['/1.avi','/2.mp4']
     base_url =os.getcwd()
-    # for item in paths:
-    #     filedata = urllib2.urlopen("http://localhost:8000/static/src/videos/" + item)
-    #     datatowrite = filedata.read()
-        
-    #     with open(base_url + str(item), 'wb') as f:
-    #         f.write(datatowrite)
-    #         q.put(f.name.split('/')[-1])
+    for item in actions:
+        if item.get('Action') == "Play File (s)":
+            print "+++++++++++++++++++++++++++++++++++++++++++++++++++ in Play file"
+            movie_name = item.get('MovieFile').split('/')[-1]
+            filedata = urllib2.urlopen(item.get('MovieFile'))
+            datatowrite = filedata.read()
+            with open(base_url + movie_name, 'wb') as f:
+                f.write(datatowrite)
+                q.put(movie_name)
     print  "video queue is  ----> ", q
     return True
     
@@ -55,37 +56,35 @@ def video_download_helper(q, actions):
 def coil(q, isloop, actions):
     print "isloop variable is", isloop
 
-    while isloop:
+    while isloop and not q.empty():
         for item in actions:
             if item.get('Action') == 'Transparent':
-                glass.make_tran()
+                # glass.make_tran()
+                pass
             if item.get('Action') == 'Wait':
                 time.sleep(item.get('Interval')  * 60 if item.get('IntervalType') else 1)
             if item.get('Action') == 'Play File (s)':
                 movie_name = item.get('MovieFile').split('/')[-1]
-                
-        if not q.empty():
-            item = q.get()
-            print "no item is  ", item
-            cap = cv2.VideoCapture(item)
-            while(cap.isOpened()):
-                ret, frame = cap.read()
-                if ret == True:
-                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
-                    cv2.setWindowProperty(
-                        "window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                    cv2.imshow('window', frame)
-                    # & 0xFF is required for a 64-bit system
-                    if cv2.waitKey(30) & 0xFF == ord('q'):
+                cap = cv2.VideoCapture(movie_name)
+                while(cap.isOpened()):
+                    ret, frame = cap.read()
+                    if ret == True:
+                        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                        cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
+                        cv2.setWindowProperty(
+                            "window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                        cv2.imshow('window', frame)
+                        # & 0xFF is required for a 64-bit system
+                        if cv2.waitKey(30) & 0xFF == ord('q'):
+                            break
+                    else:
                         break
-                else:
-                    break
-            cap.release()
-            cv2.destroyAllWindows()
-            coil(q)
-        else:
-            return True
+                cap.release()
+                cv2.destroyAllWindows()
+            if item.get('Action') == 'Opaque':
+                # glass.make_opeque()
+                pass
+
 
 class Schedular(object):
     def __init__(self, data):
@@ -113,9 +112,8 @@ def StartVideo(url, data):
             if datetime.now().time() >= projector_on__time and datetime.now().date() in  projection_dates:
                 ProjectorOnOff(1, "on")
                 video_queue_update = multiprocessing.Process(target=video_download_helper, name="coil",  args=(q,actions))
-                video_play = multiprocessing.Process(target=coil, name="coil",  args=(q,current_response.GetWemoScheduler[0].get('ContinuousLoop')))
+                video_play = multiprocessing.Process(target=coil, name="coil",  args=(q,current_response.GetWemoScheduler[0].get('ContinuousLoop'),actions))
                 video_play.start()
-                
                 while video_play.is_alive():
                     pass  
                 video_play.join()
@@ -129,8 +127,6 @@ def StartVideo(url, data):
                     pass
         else:
             pass
-
-        
         video_queue_update.start()
         return True
 
@@ -157,6 +153,6 @@ if __name__ == '__main__':
     q = Queue()
     while True:
         StartVideo(url, data)
-        time.sleep(100)
+        time.sleep(10)
         print "the gap that is provided between two runs"
 
