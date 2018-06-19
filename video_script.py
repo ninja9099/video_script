@@ -17,6 +17,8 @@ from multiprocessing import Process, Queue
 # GPIO.setmode(GPIO.BCM)
 # GPIO.setup(3, GPIO.OUT)
 
+update_flag = True
+
 
 def ProjectorOnOff(id, state):
     # if state == 1:
@@ -38,36 +40,39 @@ def internet_on():
 
 
 def video_download_helper(q, actions):
-    print "actions are ====> ", actions
+    global update_flag
+    update_flag = False
     base_url =os.getcwd()
     for item in actions:
-        print '\n',item.get('Action')
         if item.get('Action') == "Play File(s)":
-            print "+++++++++++++++++++++++++++++++++++++++++++++++++++ in Play file", item.get('MovieFile')
             movie_name = item.get('MovieFile').split('/')[-1]
-            filedata = urllib2.urlopen(item.get('MovieFile'))
-
-            datatowrite = filedata.read()
-            with open(base_url + movie_name, 'wb') as f:
-                f.write(datatowrite)
-                q.put(movie_name)
+            if os.path.isfile(movie_name):
+                print "file witn name %s already exist" %(movie_name)
+                q.put(base_url + '/' + movie_name)
+            else:
+                filedata = urllib2.urlopen(item.get('MovieFile'))
+                datatowrite = filedata.read()
+                with open(base_url + '/' + movie_name, 'wb') as f:
+                    f.write(datatowrite)
+                    q.put(f.name)
     print  "video queue is  ----> ", q
     return True
     
 
 def coil(q, isloop, actions):
     print "isloop variable is", isloop
-
-    while isloop and not q.empty():
+    while not q.empty():
         for item in actions:
+            print 'in item action'
             if item.get('Action') == 'Transparent':
                 # glass.make_tran()
                 pass
             if item.get('Action') == 'Wait':
                 time.sleep(item.get('Interval')  * 60 if item.get('IntervalType') else 1)
-            if item.get('Action') == 'Play File (s)':
+            if item.get('Action') == 'Play File(s)':
+                print "in play files"
                 movie_name = item.get('MovieFile').split('/')[-1]
-                cap = cv2.VideoCapture(movie_name)
+                cap = cv2.VideoCapture(q.get())
                 while(cap.isOpened()):
                     ret, frame = cap.read()
                     if ret == True:
@@ -86,6 +91,9 @@ def coil(q, isloop, actions):
             if item.get('Action') == 'Opaque':
                 # glass.make_opeque()
                 pass
+        if not isloop:
+            break
+    return True
 
 
 class Schedular(object):
@@ -97,8 +105,6 @@ def fetch_data(url, data):
     response = requests.post(url=url, data=data)
     current_schedular = Schedular(response.json())
     return current_schedular
-
-
 
 
 def StartVideo(url, data):
@@ -116,8 +122,9 @@ def StartVideo(url, data):
                 video_queue_update = multiprocessing.Process(target=video_download_helper, name="coil",  args=(q,actions))
                 video_play = multiprocessing.Process(target=coil, name="coil",  args=(q,current_response.GetWemoScheduler[0].get('ContinuousLoop'),actions))
                 video_play.start()
+                print "in main video process"
                 while video_play.is_alive():
-                    pass  
+                    print "playing video files .... Please Wait"  
                 video_play.join()
 
             if datetime.now().time() >= projector_off__time :
@@ -128,20 +135,22 @@ def StartVideo(url, data):
                 else:
                     pass
         else:
+            '''write logic for the IsBetweenTime =0 and we gotcha'''
             pass
-        video_queue_update.start()
-        
-        while video_queue_update.is_alive():
-            pass
-        return True
 
+        global update_flag
+        if update_flag:
+            video_queue_update.start()
+
+        while video_queue_update.is_alive():
+            print "waiting for helper to update the video queue"
+            time.sleep(10)
+        return True
     else:
         return True
         
     
 
-
-    
 
 
 if __name__ == '__main__':
@@ -158,6 +167,7 @@ if __name__ == '__main__':
     q = Queue()
     while True:
         StartVideo(url, data)
+        print "back in video player main calee function"
         time.sleep(10)
         print "the gap that is provided between two runs"
 
