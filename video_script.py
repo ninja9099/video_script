@@ -139,9 +139,8 @@ def StartVideo(url, data):
             pass
 
         global update_flag
-        if update_flag or datetime.now().time() == datetime.strptime('23:59', '%H:%M').time():
+        if update_flag or datetime.now().time() > datetime.strptime('23:00', '%H:%M').time():
             video_queue_update.start()
-
         while video_queue_update.is_alive():
             print "waiting for helper to update the video queue"
             time.sleep(10)
@@ -149,7 +148,6 @@ def StartVideo(url, data):
     else:
         return True
         
-
 if __name__ == '__main__':
     
     internet_on()
