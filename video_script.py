@@ -10,21 +10,21 @@ import numpy as np
 import cv2
 
 from datetime import datetime
-import R64.GPIO as GPIO
+# import R64.GPIO as GPIO
 from time import sleep
 from multiprocessing import Process, Queue
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(3, GPIO.OUT)
+# GPIO.setmode(GPIO.BCM)
+# GPIO.setup(3, GPIO.OUT)
 
 
 def ProjectorOnOff(id, state):
-    if state == 1:
-        GPIO.output(3, GPIO.HIGH)
-    else:
-        GPIO.output(3, GPIO.LOW)
+    # if state == 1:
+    #     GPIO.output(3, GPIO.HIGH)
+    # else:
+    #     GPIO.output(3, GPIO.LOW)
     
-    print "projector %s  is now is in  %s state" % (id, state)
+    # print "projector %s  is now is in  %s state" % (id, state)
     return True
 
 
@@ -78,7 +78,6 @@ def coil(q):
 
 class Schedular(object):
     def __init__(self, data):
-        print data
         self.__dict__ = data
 
 
@@ -92,29 +91,26 @@ def fetch_data(url, data):
 
 def StartVideo(url, data):
     current_response = fetch_data(url, data)
-    on_schedule = {}
-    off_schedule = {}
-    for item in current_response.GetWemoScheduler:
-        if item['SchedulerName'] =='ProjectorOn':
-            on_schedule = item
-        if item['SchedulerName'] == "ProjectorOff":
-            off_schedule = item
+    if current_response.GetWemoScheduler[0].get('ActiveStatus'):
+        projection_dates = [datetime.strptime(item.get('ScheduleDate'), '%d-%b-%Y %H:%M:%S').date() for item in current_response.GetWemoScheduler[0].get('WemoReportDates')] 
+        actions = [{item.get('Action'): item.get('MovieFile')} for item in current_response.GetWemoScheduler[0].get('WemoAction')] 
+    else:
+        return True
+        
+    projector_on__time = datetime.strptime(current_response.GetWemoScheduler[0].get('SchedulerFromDate'), "%m/%d/%Y %H:%M:%S %p").time()
+    projector_off__time = datetime.strptime(current_response.GetWemoScheduler[0].get('SchedulerToDate'), "%m/%d/%Y %H:%M:%S %p").time()
     
-    
-
-    projector_on__date = datetime.strptime(on_schedule['SchedulerStartDate'], "%d/%m/%Y %H:%M:%S %p")
-    projector_off__date = datetime.strptime(off_schedule['SchedulerStartDate'], "%d/%m/%Y %H:%M:%S %p")
-    
-
-    if current_date >= projector_on__date:
+    if datetime.now().time() >= projector_on__time and datetime.date() in  projection_dates:
         ProjectorOnOff(1, "on")
-    if current_date >= projector_off__date:
+    if datetime.now().time() >= projector_off__time:
         ProjectorOnOff(1, "off")
 
+
     video_queue_update = multiprocessing.Process(target=video_download_helper, name="coil",  args=(q,))
-    video_play = multiprocessing.Process(target=coil, name="coil",  args=(q,))
+    video_play = multiprocessing.Process(target=coil, name="coil",  args=(q,actions))
     
     video_play.start()
+    
     while video_play.is_alive():
         pass  
     video_play.join()
@@ -126,13 +122,12 @@ def StartVideo(url, data):
 
 
 if __name__ == '__main__':
+    
     internet_on()
-    last_date = datetime.strptime(
-        '3/1/2018 9:42:00 AM', "%d/%m/%Y %H:%M:%S %p")
-    current_date = datetime.now()
+   
     data = {
         'AuthKey': "VLXFPwJfJEUqBjPhquC1QAhA+LFVfS3+p4zKcanYnUY=",
-        'LocationId': 4
+        'LocationId': 10
     }
 
     url = "http://rwscloud.devs-vipl.com/WebService/RWSCloudData.asmx/GetWemoScheduler"
@@ -140,5 +135,6 @@ if __name__ == '__main__':
     q = Queue()
     while True:
         StartVideo(url, data)
+        time.sleep(100)
         print "the gap that is provided between two runs"
 
