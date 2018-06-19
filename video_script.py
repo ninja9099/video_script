@@ -95,7 +95,6 @@ def coil(q, isloop, actions):
             break
     return True
 
-
 class Schedular(object):
     def __init__(self, data):
         self.__dict__ = data
