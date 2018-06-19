@@ -122,9 +122,9 @@ def StartVideo(url, data):
                 video_queue_update = multiprocessing.Process(target=video_download_helper, name="coil",  args=(q,actions))
                 video_play = multiprocessing.Process(target=coil, name="coil",  args=(q,current_response.GetWemoScheduler[0].get('ContinuousLoop'),actions))
                 video_play.start()
-                print "in main video process"
                 while video_play.is_alive():
-                    print "playing video files .... Please Wait"  
+                    print "playing video files .... Please Wait" 
+                    time.sleep(20)
                 video_play.join()
 
             if datetime.now().time() >= projector_off__time :
@@ -139,7 +139,7 @@ def StartVideo(url, data):
             pass
 
         global update_flag
-        if update_flag:
+        if update_flag or datetime.now().time() == datetime.strptime('23:59', '%H:%M').time():
             video_queue_update.start()
 
         while video_queue_update.is_alive():
@@ -149,9 +149,6 @@ def StartVideo(url, data):
     else:
         return True
         
-    
-
-
 
 if __name__ == '__main__':
     
