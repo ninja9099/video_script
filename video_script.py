@@ -94,33 +94,42 @@ def fetch_data(url, data):
 
 def StartVideo(url, data):
     current_response = fetch_data(url, data)
+    
     if current_response.GetWemoScheduler[0].get('ActiveStatus'):
         projection_dates = [datetime.strptime(item.get('ScheduleDate'), '%d-%b-%Y %H:%M:%S').date() for item in current_response.GetWemoScheduler[0].get('WemoReportDates')] 
         actions = [{item.get('Action'): item.get('MovieFile')} for item in current_response.GetWemoScheduler[0].get('WemoAction')] 
+        
+        projector_on__time = datetime.strptime(current_response.GetWemoScheduler[0].get('SchedulerFromDate'), "%m/%d/%Y %H:%M:%S %p").time()
+        projector_off__time = datetime.strptime(current_response.GetWemoScheduler[0].get('SchedulerToDate'), "%m/%d/%Y %H:%M:%S %p").time()
+    
+        if current_response.GetWemoScheduler[0].get('IsBetweenTime'):
+            if datetime.now().time() >= projector_on__time and datetime.now().date() in  projection_dates:
+                ProjectorOnOff(1, "on")
+            if datetime.now().time() >= projector_off__time:
+                ProjectorOnOff(1, "off")
+        else:
+            pass
+
+        video_queue_update = multiprocessing.Process(target=video_download_helper, name="coil",  args=(q,actions))
+        video_play = multiprocessing.Process(target=coil, name="coil",  args=(q,))
+        
+        video_play.start()
+        
+        while video_play.is_alive():
+            pass  
+        video_play.join()
+
+        if 3 > 2:
+            video_queue_update.start()
+        return True
+
     else:
         return True
         
-    projector_on__time = datetime.strptime(current_response.GetWemoScheduler[0].get('SchedulerFromDate'), "%m/%d/%Y %H:%M:%S %p").time()
-    projector_off__time = datetime.strptime(current_response.GetWemoScheduler[0].get('SchedulerToDate'), "%m/%d/%Y %H:%M:%S %p").time()
     
-    if current_response.GetWemoScheduler[0].get('IsBetweenTime'):
-        if datetime.now().time() >= projector_on__time and datetime.now().date() in  projection_dates:
-            ProjectorOnOff(1, "on")
-        if datetime.now().time() >= projector_off__time:
-            ProjectorOnOff(1, "off")
 
-    video_queue_update = multiprocessing.Process(target=video_download_helper, name="coil",  args=(q,actions))
-    video_play = multiprocessing.Process(target=coil, name="coil",  args=(q,))
-    
-    video_play.start()
-    
-    while video_play.is_alive():
-        pass  
-    video_play.join()
 
-    if 3 > 2:
-        video_queue_update.start()
-    return True
+    
 
 
 if __name__ == '__main__':
