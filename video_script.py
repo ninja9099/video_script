@@ -41,6 +41,7 @@ def video_download_helper(q, actions):
     print "actions are ====> ", actions
     base_url =os.getcwd()
     for item in actions:
+        print item.get('Action')'\n'
         if item.get('Action') == "Play File (s)":
             print "+++++++++++++++++++++++++++++++++++++++++++++++++++ in Play file"
             movie_name = item.get('MovieFile').split('/')[-1]
