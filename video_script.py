@@ -41,11 +41,12 @@ def video_download_helper(q, actions):
     print "actions are ====> ", actions
     base_url =os.getcwd()
     for item in actions:
-        print item.get('Action')'\n'
-        if item.get('Action') == "Play File (s)":
-            print "+++++++++++++++++++++++++++++++++++++++++++++++++++ in Play file"
+        print '\n',item.get('Action')
+        if item.get('Action') == "Play File(s)":
+            print "+++++++++++++++++++++++++++++++++++++++++++++++++++ in Play file", item.get('MovieFile')
             movie_name = item.get('MovieFile').split('/')[-1]
             filedata = urllib2.urlopen(item.get('MovieFile'))
+
             datatowrite = filedata.read()
             with open(base_url + movie_name, 'wb') as f:
                 f.write(datatowrite)
@@ -129,6 +130,9 @@ def StartVideo(url, data):
         else:
             pass
         video_queue_update.start()
+        
+        while video_queue_update.is_alive():
+            pass
         return True
 
     else:
