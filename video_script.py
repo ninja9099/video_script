@@ -37,16 +37,19 @@ def internet_on():
         raise Exception("No Connectivity Please Check your internet connection")
 
 
-def video_download_helper(q):
+def video_download_helper(q, actions):
+    import pdb
+    pdb.set_trace()
+    print actions
     paths = ['/1.avi','/2.mp4']
     base_url =os.getcwd()
-    for item in paths:
-        filedata = urllib2.urlopen("http://localhost:8000/static/src/videos/" + item)
-        datatowrite = filedata.read()
+    # for item in paths:
+    #     filedata = urllib2.urlopen("http://localhost:8000/static/src/videos/" + item)
+    #     datatowrite = filedata.read()
         
-        with open(base_url + str(item), 'wb') as f:
-            f.write(datatowrite)
-            q.put(f.name.split('/')[-1])
+    #     with open(base_url + str(item), 'wb') as f:
+    #         f.write(datatowrite)
+    #         q.put(f.name.split('/')[-1])
     print  "video queue is  ----> ", q
     return True
     
@@ -100,14 +103,14 @@ def StartVideo(url, data):
     projector_on__time = datetime.strptime(current_response.GetWemoScheduler[0].get('SchedulerFromDate'), "%m/%d/%Y %H:%M:%S %p").time()
     projector_off__time = datetime.strptime(current_response.GetWemoScheduler[0].get('SchedulerToDate'), "%m/%d/%Y %H:%M:%S %p").time()
     
-    if datetime.now().time() >= projector_on__time and datetime.date() in  projection_dates:
-        ProjectorOnOff(1, "on")
-    if datetime.now().time() >= projector_off__time:
-        ProjectorOnOff(1, "off")
+    if current_response.GetWemoScheduler[0].get('IsBetweenTime'):
+        if datetime.now().time() >= projector_on__time and datetime.now().date() in  projection_dates:
+            ProjectorOnOff(1, "on")
+        if datetime.now().time() >= projector_off__time:
+            ProjectorOnOff(1, "off")
 
-
-    video_queue_update = multiprocessing.Process(target=video_download_helper, name="coil",  args=(q,))
-    video_play = multiprocessing.Process(target=coil, name="coil",  args=(q,actions))
+    video_queue_update = multiprocessing.Process(target=video_download_helper, name="coil",  args=(q,actions))
+    video_play = multiprocessing.Process(target=coil, name="coil",  args=(q,))
     
     video_play.start()
     
@@ -117,7 +120,6 @@ def StartVideo(url, data):
 
     if 3 > 2:
         video_queue_update.start()
-    
     return True
 
 
