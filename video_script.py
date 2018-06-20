@@ -147,7 +147,7 @@ def StartVideo(url, data, q):
         #             video_queue_update.terminate()
         #         else:
         #             pass
-        if  not current_response.GetWemoScheduler[0].get('IsBetweenTime'):
+        if  current_response.GetWemoScheduler[0].get('IsBetweenTime'):
             '''write logic for the IsBetweenTime =0 and we gotcha'''
             projection_dates = {datetime.strptime(item.get('ScheduleDate'), '%d-%b-%Y %H:%M:%S').date():datetime.strptime(item.get('ScheduleDate'),'%d-%b-%Y %H:%M:%S').time() for item in current_response.GetWemoScheduler[0].get('WemoReportDates')}
             if datetime.now().date() in projection_dates:
