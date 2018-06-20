@@ -97,8 +97,13 @@ def coil(q, isloop, actions, fromdate, todate):
             if item.get('Action') == 'Opaque':
                 glass('opaque')
                 pass
-        if not isloop or fromdate > datetime.now().time() or todate < datetime.now().time():
-            break
+        if fromdate > datetime.now().time() or todate < datetime.now().time():
+           break    
+        if not isloop:
+            while todate > datetime.now().time():
+                print "waiting for period to complete"
+                time.sleep(10)
+            # TODO implement busy waiting here in time if isloop is  false
     return True
 
 class Schedular(object):
@@ -112,11 +117,13 @@ def fetch_data(url, data):
     return current_schedular
 
 
-def StartVideo(url, data):
+def StartVideo(url, data, q):
     current_response = fetch_data(url, data)
     if current_response.GetWemoScheduler[0].get('ActiveStatus'):
         actions = [item for item in current_response.GetWemoScheduler[0].get('WemoAction')]  
         video_queue_update = multiprocessing.Process(target=video_download_helper, name="coil",  args=(q,actions))
+        if q.empty():
+            print "please update video queue first to get started"
         if current_response.GetWemoScheduler[0].get('IsBetweenTime'):
             
             projection_dates = [datetime.strptime(item.get('ScheduleDate'), '%d-%b-%Y %H:%M:%S').date() for item in current_response.GetWemoScheduler[0].get('WemoReportDates')] 
@@ -169,7 +176,7 @@ if __name__ == '__main__':
     
     q = Queue()
     while True:
-        StartVideo(url, data)
+        StartVideo(url, data, q)
         print "back in video player main calee function"
         time.sleep(10)
         print "the gap that is provided between two runs"
