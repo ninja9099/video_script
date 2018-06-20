@@ -16,9 +16,16 @@ from multiprocessing import Process, Queue
 
 # GPIO.setmode(GPIO.BCM)
 # GPIO.setup(3, GPIO.OUT)
-
+# GPIO.setup(4, GPIO.OUT)
 update_flag = True
 
+
+def glass(command):
+    # if command ==  "opaque":
+    #     GPIO.output(4, GPIO.LOW)
+    # elif command == 'transparent':
+    #     GPIO.output(4, GPIO.HIGH)
+    return True
 
 def ProjectorOnOff(id, state):
     # if state == 1:
@@ -59,14 +66,13 @@ def video_download_helper(q, actions):
     return True
     
 
-def coil(q, isloop, actions):
+def coil(q, isloop, actions, fromdate, todate):
     print "isloop variable is", isloop
     while not q.empty():
         for item in actions:
             print 'in item action'
             if item.get('Action') == 'Transparent':
-                # glass.make_tran()
-                pass
+                glass('transparent')
             if item.get('Action') == 'Wait':
                 time.sleep(item.get('Interval')  * 60 if item.get('IntervalType') else 1)
             if item.get('Action') == 'Play File(s)':
@@ -89,9 +95,9 @@ def coil(q, isloop, actions):
                 cap.release()
                 cv2.destroyAllWindows()
             if item.get('Action') == 'Opaque':
-                # glass.make_opeque()
+                glass('opaque')
                 pass
-        if not isloop:
+        if not isloop or fromdate > datetime.now().time() or todate < datetime.now().time():
             break
     return True
 
@@ -109,32 +115,35 @@ def fetch_data(url, data):
 def StartVideo(url, data):
     current_response = fetch_data(url, data)
     if current_response.GetWemoScheduler[0].get('ActiveStatus'):
-        projection_dates = [datetime.strptime(item.get('ScheduleDate'), '%d-%b-%Y %H:%M:%S').date() for item in current_response.GetWemoScheduler[0].get('WemoReportDates')] 
-        actions = [item for item in current_response.GetWemoScheduler[0].get('WemoAction')] 
-        
-        projector_on__time = datetime.strptime(current_response.GetWemoScheduler[0].get('SchedulerFromDate'), "%m/%d/%Y %H:%M:%S %p").time()
-        projector_off__time = datetime.strptime(current_response.GetWemoScheduler[0].get('SchedulerToDate'), "%m/%d/%Y %H:%M:%S %p").time()
-    
+        actions = [item for item in current_response.GetWemoScheduler[0].get('WemoAction')]  
+        video_queue_update = multiprocessing.Process(target=video_download_helper, name="coil",  args=(q,actions))
         if current_response.GetWemoScheduler[0].get('IsBetweenTime'):
-            if datetime.now().time() >= projector_on__time and datetime.now().date() in  projection_dates:
+            
+            projection_dates = [datetime.strptime(item.get('ScheduleDate'), '%d-%b-%Y %H:%M:%S').date() for item in current_response.GetWemoScheduler[0].get('WemoReportDates')] 
+            start_time = datetime.strptime(current_response.GetWemoScheduler[0].get('SchedulerFromDate'), "%m/%d/%Y %H:%M:%S %p").time()
+            end_time = datetime.strptime(current_response.GetWemoScheduler[0].get('SchedulerToDate'), "%m/%d/%Y %H:%M:%S %p").time()
+            video_play = multiprocessing.Process(target=coil, name="coil",  args=(q,current_response.GetWemoScheduler[0].get('ContinuousLoop'),actions, start_time, end_time))
+            
+            if datetime.now().time() >= start_time and datetime.now().date() in  projection_dates:
                 ProjectorOnOff(1, "on")
-                video_queue_update = multiprocessing.Process(target=video_download_helper, name="coil",  args=(q,actions))
-                video_play = multiprocessing.Process(target=coil, name="coil",  args=(q,current_response.GetWemoScheduler[0].get('ContinuousLoop'),actions))
+                
                 video_play.start()
                 while video_play.is_alive():
                     print "playing video files .... Please Wait" 
                     time.sleep(20)
                 video_play.join()
 
-            if datetime.now().time() >= projector_off__time :
+            if datetime.now().time() >= end_time :
                 ProjectorOnOff(1, "off")
                 if video_play.is_alive():
                     video_play.terminate()
                     video_queue_update.terminate()
                 else:
                     pass
-        else:
+        if not current_response.GetWemoScheduler[0].get('IsBetweenTime'):
             '''write logic for the IsBetweenTime =0 and we gotcha'''
+            projection_dates = [datetime.strptime(item.get('ScheduleDate'), '%d-%b-%Y %H:%M:%S') for item in current_response.GetWemoScheduler[0].get('WemoReportDates')] 
+            # video_play = multiprocessing.Process(target=coil, name="coil",  args=(q,current_response.GetWemoScheduler[0].get('ContinuousLoop'),actions, projector_on__time, projector_off__time))
             pass
 
         global update_flag
