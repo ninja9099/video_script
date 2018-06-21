@@ -68,15 +68,15 @@ def coil(video_q, loops):
     
     loop_schedule = loops[0]
     actions = [actn for actn in loop_schedule.get('WemoAction')]
-    start_time = datetime.strptime(loop_schedule.get('SchedulerFromDate'), "%m/%d/%Y %H:%M:%S %p").time()
-    end_time = datetime.strptime(loop_schedule.get('SchedulerToDate'), "%m/%d/%Y %H:%M:%S %p").time()
+    start_time = datetime.strptime(loop_schedule.get('SchedulerFromDate'), "%m/%d/%Y %I:%M:%S %p").time()
+    end_time = datetime.strptime(loop_schedule.get('SchedulerToDate'), "%m/%d/%Y %I:%M:%S %p").time()
     projection_dates = [datetime.strptime(item.get('ScheduleDate'), '%d-%b-%Y %H:%M:%S').date() for item in loop_schedule.get('WemoReportDates')] 
     
     if video_q.empty():
         print 'updating queues please wait !'
         video_download_helper(video_q, actions)
     print 'in coil spring out', video_q.empty(), start_time, datetime.now().time().replace(microsecond=0), end_time
-    while True : # not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time
+    while not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
         new_video_q = video_q
         for item in actions:
             print 'in item action'
@@ -114,25 +114,26 @@ def get_schedule(url, data):
     return response.json() 
 
 def ProjectorOnOff(schedulers):
-    on_flag = False
-    off_flag = True
+    projector_status = False
+    for schedule in schedulers:
+        for sch_action in schedule.get('WemoAction'):
+            if sch_action.get('Action') == 'Transparent':
+                projection_dates = [datetime.strptime(p_date.get('ScheduleDate'),'%d-%b-%Y %H:%M:%S').date() for p_date in schedule.get('WemoReportDates')]
+                on_time = datetime.strptime(schedule.get('SchedulerStartDate'), '%m/%d/%Y %I:%M:%S %p').time()
+            else:
+                off_time = datetime.strptime(schedule.get('SchedulerStartDate'), '%m/%d/%Y %I:%M:%S %p').time()
+
+
     while True:
-        for sched in schedulers:
-            projection_dates = [datetime.strptime(p_date.get('ScheduleDate'),'%d-%b-%Y %H:%M:%S').date() for p_date in sched.get('WemoReportDates')]
-            start_time =  datetime.strptime(sched.get('SchedulerStartDate'), '%m/%d/%Y %I:%M:%S %p').time()
-            for actn in  sched.get('WemoAction'):
-                if datetime.now().time() >= start_time: 
-                    print   datetime.now().time(), start_time, actn['Action']
-                    if actn['Action'] == 'Transparent' and not on_flag:
-                        ProjectorOnOffSwitch(1, 'on')
-                        print "projector is on now"
-                        on_flag =True
-                        off_flag = False
-                    if actn['Action'] == 'Opaque' and not off_flag:
-                        ProjectorOnOffSwitch(1, 'off')
-                        print 'proector is off now'
-                        on_flag =False
-                        off_flag = True
+        if datetime.now().date() in projection_dates:
+            if on_time <= datetime.now().time().replace(microsecond=0) <= off_time:
+                if not projector_status:
+                    ProjectorOnOffSwitch(1, 'on')
+                    print "projector is on now"
+                    projector_status = True
+            else:
+                ProjectorOnOffSwitch(1, 'off')
+                projector_status = False
         time.sleep(10)
 
 
