@@ -13,30 +13,27 @@ import numpy as np
 import cv2
 
 from datetime import datetime
-# import R64.GPIO as GPIO
+import R64.GPIO as GPIO
 from time import sleep
 from multiprocessing import Process, Queue
 
-# GPIO.setmode(GPIO.BCM)
-# GPIO.setup(3, GPIO.OUT)
-# GPIO.setup(4, GPIO.OUT)
-update_flag = True
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(2, GPIO.OUT)
+GPIO.setup(3, GPIO.OUT)
 pp = pprint.PrettyPrinter()
 
-
-
 def glass(command):
-    # if command ==  "opaque":
-    #     GPIO.output(4, GPIO.LOW)
-    # elif command == 'transparent':
-    #     GPIO.output(4, GPIO.HIGH)
+    if command ==  "opaque":
+        GPIO.output(2, GPIO.LOW)
+    elif command == 'transparent':
+        GPIO.output(2, GPIO.HIGH)
     return True
 
 def ProjectorOnOffSwitch(pin, state):
-    # if state == 'off':
- #        GPIO.output(3, GPIO.HIGH)
- #    if state == 'on':
- #        GPIO.output(3, GPIO.LOW)
+    if state == 'off':
+        GPIO.output(3, GPIO.HIGH)
+    if state == 'on':
+        GPIO.output(3, GPIO.LOW)
     return True
 
 def internet_on():
@@ -105,7 +102,6 @@ def coil(video_q, loops):
                 cv2.destroyAllWindows()
             if item.get('Action') == 'Opaque':
                 glass('opaque')
-                
         coil(new_video_q, loops)
 
 
@@ -128,11 +124,11 @@ def ProjectorOnOff(schedulers):
         if datetime.now().date() in projection_dates:
             if on_time <= datetime.now().time().replace(microsecond=0) <= off_time:
                 if not projector_status:
-                    ProjectorOnOffSwitch(1, 'on')
+                    ProjectorOnOffSwitch(3, 'on')
                     print "projector is on now"
                     projector_status = True
             else:
-                ProjectorOnOffSwitch(1, 'off')
+                ProjectorOnOffSwitch(3, 'off')
                 projector_status = False
         time.sleep(10)
 
