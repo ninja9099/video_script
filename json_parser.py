@@ -13,27 +13,28 @@ import numpy as np
 import cv2
 
 from datetime import datetime
-import R64.GPIO as GPIO
+# import R64.GPIO as GPIO
 from time import sleep
 from multiprocessing import Process, Queue
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(2, GPIO.OUT)
-GPIO.setup(3, GPIO.OUT)
+# GPIO.setmode(GPIO.BCM)
+# GPIO.setup(2, GPIO.OUT)
+# GPIO.setup(3, GPIO.OUT)
 pp = pprint.PrettyPrinter()
 
 def glass(command):
-    if command ==  "opaque":
-        GPIO.output(2, GPIO.LOW)
-    elif command == 'transparent':
-        GPIO.output(2, GPIO.HIGH)
+    print "in glass function", command
+    # if command ==  "opaque":
+    #     GPIO.output(2, GPIO.LOW)
+    # elif command == 'transparent':
+    #     GPIO.output(2, GPIO.HIGH)
     return True
 
 def ProjectorOnOffSwitch(pin, state):
-    if state == 'off':
-        GPIO.output(3, GPIO.HIGH)
-    if state == 'on':
-        GPIO.output(3, GPIO.LOW)
+    # if state == 'off':
+    #     GPIO.output(3, GPIO.HIGH)
+    # if state == 'on':
+    #     GPIO.output(3, GPIO.LOW)
     return True
 
 def internet_on():
@@ -62,9 +63,10 @@ def video_download_helper(video_q, actions):
     return True
 
 def coil(video_q, loops):
-    
+    actions = []
     loop_schedule = loops[0]
-    actions = [actn for actn in loop_schedule.get('WemoAction')]
+    for actn in loop_schedule.get('WemoAction'):
+        actions.insert(actn.get('SrNo'), actn)
     start_time = datetime.strptime(loop_schedule.get('SchedulerFromDate'), "%m/%d/%Y %I:%M:%S %p").time()
     end_time = datetime.strptime(loop_schedule.get('SchedulerToDate'), "%m/%d/%Y %I:%M:%S %p").time()
     projection_dates = [datetime.strptime(item.get('ScheduleDate'), '%d-%b-%Y %H:%M:%S').date() for item in loop_schedule.get('WemoReportDates')] 
@@ -73,10 +75,10 @@ def coil(video_q, loops):
         print 'updating queues please wait !'
         video_download_helper(video_q, actions)
     print 'in coil spring out', video_q.empty(), start_time, datetime.now().time().replace(microsecond=0), end_time
-    while not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
+    while True: #not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
         new_video_q = video_q
         for item in actions:
-            print 'in item action'
+            print 'in item action==>', item.get('Action')
             if item.get('Action') == 'Transparent':
                 glass('transparent')
             if item.get('Action') == 'Wait':
@@ -163,4 +165,4 @@ if __name__ == '__main__':
         schedular = get_schedule(url, data)
         WemoSchedular(schedular, video_q, on_off_queue)
         print "Sleeping for some rest See you Soon !"
-        time.sleep(100)
+        time.sleep(1)
