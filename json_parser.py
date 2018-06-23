@@ -165,4 +165,4 @@ if __name__ == '__main__':
         schedular = get_schedule(url, data)
         WemoSchedular(schedular, video_q, on_off_queue)
         print "Sleeping for some rest See you Soon !"
-        time.sleep(1)
+        time.sleep(10)
