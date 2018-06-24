@@ -11,7 +11,7 @@ import requests
 import multiprocessing
 import numpy as np
 import cv2
-
+import configparser
 from datetime import datetime
 import R64.GPIO as GPIO
 from time import sleep
@@ -156,18 +156,26 @@ def WemoSchedular(current_schedular, video_q, on_off_queue):
 
 
 if __name__ == '__main__':
-    
+    data = {}
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    for key in config['DEFAULT']:
+        if key == "authkey":
+            data.update({'AuthKey':config['DEFAULT'][key]})
+        if key  == "locationid":
+            data.update({'LocationId':config['DEFAULT'][key]})
+    print data
     internet_on()
-    data = {
-        'AuthKey': "VLXFPwJfJEUqBjPhquC1QAhA+LFVfS3+p4zKcanYnUY=",
-        'LocationId': 10
-    }
+    # data = {
+    #     'AuthKey': "VLXFPwJfJEUqBjPhquC1QAhA+LFVfS3+p4zKcanYnUY=",
+    #     'LocationId': 10
+    # }
     url = "http://rwscloud.devs-vipl.com/WebService/RWSCloudData.asmx/GetWemoScheduler"    
     video_q = Queue()
     on_off_queue = Queue()
     
     while True:
         schedular = get_schedule(url, data)
-        WemoSchedular(schedular, video_q, on_off_queue)
+        WemoSchedular(schedular, video_q, on_off_queue) 
         print "Sleeping for some rest See you Soon !"
         time.sleep(10)
