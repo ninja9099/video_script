@@ -12,7 +12,7 @@ import multiprocessing
 import numpy as np
 import cv2
 import configparser
-from datetime import datetime
+from datetime import datetime, timedelta
 import R64.GPIO as GPIO
 from time import sleep
 from multiprocessing import Process, Queue
@@ -26,7 +26,7 @@ def glass(command):
     print "in glass function", command
     if command ==  "opaque":
         GPIO.output(2, GPIO.LOW)
-    elif command == 'transparent':
+    elif command == "transparent":
         GPIO.output(2, GPIO.HIGH)
     return True
 
@@ -80,14 +80,28 @@ def coil(video_q, loops):
         print 'updating queues please wait !'
         video_download_helper(video_q, actions)
     print 'in coil spring out', video_q.empty(), start_time, datetime.now().time().replace(microsecond=0), end_time
-    while not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
+    while True: #not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
         new_video_q = video_q
         for item in actions:
             print 'in item action==>', item.get('Action')
             if item.get('Action') == 'Transparent':
                 glass('transparent')
             if item.get('Action') == 'Wait':
-                time.sleep(item.get('Interval')  * 60 if item.get('IntervalType') else 1)
+                img = cv2.imread('joker.png',0)
+                cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
+                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
+                
+                start = datetime.now()
+                interval  = item.get('Interval')*60 if item.get('IntervalType') else 1
+                while datetime.now() - start < timedelta(seconds=interval):        
+                    cv2.imshow('image',img) 
+                    while(True):
+                        k = cv2.waitKey(3000)
+                        if k == 27:
+                            pass
+                        break
+                cv2.destroyWindow('image')
+                cv2.destroyAllWindows() 
             if item.get('Action') == 'Play File(s)':
                 print "in play files"
                 movie_name = item.get('MovieFile').split('/')[-1]
@@ -134,9 +148,9 @@ def ProjectorOnOff(schedulers):
                     ProjectorOnOffSwitch(3, 'on')
                     print "projector is on now"
                     projector_status = True
-            else:
-                ProjectorOnOffSwitch(3, 'off')
-                projector_status = False
+                else:
+                    ProjectorOnOffSwitch(3, 'off')
+                    projector_status = False
         time.sleep(10)
 
 
