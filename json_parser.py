@@ -93,7 +93,7 @@ def coil(video_q, loops):
                 print 'in wait wait call'
                 img = cv2.imread('joker.png',0)
                 cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
-                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
                 start = datetime.now()
                 interval  = item.get('Interval')*60 if item.get('IntervalType') else 1
                 while datetime.now() - start < timedelta(seconds=interval):        
@@ -115,7 +115,7 @@ def coil(video_q, loops):
                         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                         cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
                         cv2.setWindowProperty(
-                            "window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                            "window", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
                         cv2.imshow('window', frame)
                         # & 0xFF is required for a 64-bit system
                         if cv2.waitKey(30) & 0xFF == ord('q'):
