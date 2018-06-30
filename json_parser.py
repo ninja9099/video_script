@@ -3,6 +3,7 @@ import requests
 import pprint
 import os
 import sys
+import shutil
 import time
 import json
 import getpass
