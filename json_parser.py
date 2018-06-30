@@ -50,13 +50,13 @@ def video_download_helper(video_q, actions):
     for item in actions:
         if item.get('Action') == "Play File(s)":
             movie_name = item.get('MovieFile').split('/')[-1]
-            if os.path.isfile(movie_name):
+            if os.path.isfile(base_url + '/vids/' + movie_name):
                 print "file witn name %s already exist" %(movie_name)
-                video_q.put(base_url + '/' + movie_name)
+                video_q.put(base_url + '/vids/' + movie_name)
             else:
                 filedata = urllib2.urlopen(item.get('MovieFile'))
                 datatowrite = filedata.read()
-                with open(base_url + '/' + movie_name, 'wb') as f:
+                with open(base_url + '/vids/' + movie_name, 'wb') as f:
                     f.write(datatowrite)
                     video_q.put(f.name)
     print  "video queue is  ----> ", video_q
@@ -114,7 +114,7 @@ def coil(video_q, loops):
                         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                         cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
                         cv2.setWindowProperty(
-                            "window", cv2.WND_PROP_FULLSCREEN, cv2.qqWINDOW_FULLSCREEN)
+                            "window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
                         cv2.imshow('window', frame)
                         # & 0xFF is required for a 64-bit system
                         if cv2.waitKey(30) & 0xFF == ord('q'):
@@ -168,6 +168,12 @@ def WemoSchedular(current_schedular, video_q, on_off_queue):
     print 'blocking on the process to complete the execution'
     video_play.join()
 
+    if datetime.strptime('2018/01/01 11:00:00 PM', '%Y/%d/%m %I:%M:%S %p').time() >  datetime.now().time().replace(microsecond=0):
+        for root, dirs, files in os.walk(os.getcwd() + '/vids/'):
+            for f in files:
+                os.unlink(os.path.join(root, f))
+            for d in dirs:
+                shutil.rmtree(os.path.join(root, d))
     return True
 
 
@@ -182,10 +188,6 @@ if __name__ == '__main__':
             data.update({'LocationId':config['DEFAULT'][key]})
     print data
     internet_on()
-    # data = {
-    #     'AuthKey': "VLXFPwJfJEUqBjPhquC1QAhA+LFVfS3+p4zKcanYnUY=",
-    #     'LocationId': 10
-    # }
     url = "http://rwscloud.devs-vipl.com/WebService/RWSCloudData.asmx/GetWemoScheduler"    
     video_q = Queue()
     on_off_queue = Queue()
