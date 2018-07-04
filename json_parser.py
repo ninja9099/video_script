@@ -24,14 +24,19 @@ GPIO.setup(3, GPIO.OUT)
 pp = pprint.PrettyPrinter()
 
 def glass(command):
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(2, GPIO.OUT)
     print "in glass function", command
     if command ==  "opaque":
         GPIO.output(2, GPIO.LOW)
     elif command == "transparent":
         GPIO.output(2, GPIO.HIGH)
+        time.sleep(10)
     return True
 
 def ProjectorOnOffSwitch(pin, state):
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(3, GPIO.OUT)
     if state == 'off':
         GPIO.output(3, GPIO.HIGH)
     if state == 'on':
@@ -88,7 +93,6 @@ def coil(video_q, loops):
             if item.get('ActionId') == 2:
                 print "in transparent action"
                 glass('transparent')
-                time.sleep(4)
             if item.get('ActionId') == 0:
                 print 'in wait wait call'
                 img = cv2.imread('joker.png',0)
@@ -125,7 +129,7 @@ def coil(video_q, loops):
                 cap.release()
                 cv2.destroyAllWindows()
             if item.get('ActionId') == 3:
-                glass('opaque')
+               glass('opaque')
         coil(new_video_q, loops)
 
 
