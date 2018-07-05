@@ -95,12 +95,8 @@ def coil(video_q, loops):
             if item.get('ActionId') == 2:
                 print "in transparent action"
                 glass('transparent')
-<<<<<<< HEAD
                 time.sleep(4)
             elif item.get('ActionId') == 0:
-=======
-            if item.get('ActionId') == 0:
->>>>>>> b061eb1347a4ddcfae0c1b69d00bcc6dcbe051b6
                 print 'in wait wait call'
                 img = cv2.imread('joker.png',0)
                 cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
@@ -135,15 +131,10 @@ def coil(video_q, loops):
                         break
                 cap.release()
                 cv2.destroyAllWindows()
-<<<<<<< HEAD
             elif item.get('ActionId') == 3:
                 glass('opaque')
             else:
             	pass
-=======
-            if item.get('ActionId') == 3:
-               glass('opaque')
->>>>>>> b061eb1347a4ddcfae0c1b69d00bcc6dcbe051b6
         coil(new_video_q, loops)
 
 
