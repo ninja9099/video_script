@@ -4,7 +4,7 @@ import pprint
 import os
 import sys
 import shutil
-import time
+import time as stm
 import json
 import getpass
 import urllib2
@@ -13,9 +13,9 @@ import multiprocessing
 import numpy as np
 import cv2
 import configparser
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
+
 import R64.GPIO as GPIO
-from time import sleep
 from multiprocessing import Process, Queue
 
 GPIO.setmode(GPIO.BCM)
@@ -33,7 +33,6 @@ def glass(command):
         GPIO.output(2, GPIO.LOW)
     elif command == "transparent":
         GPIO.output(2, GPIO.HIGH)
-        time.sleep(10)
     return True
 
 def ProjectorOnOffSwitch(pin, state):
@@ -73,7 +72,7 @@ def video_download_helper(video_q, actions):
 def coil(video_q, loops):
     actions = []
     try:
-        loop_schedule = loops[0]
+    	loop_schedule = loops[0]
     except:
         raise Exception("No Schedulares found Exiting.....! ")
         return True
@@ -88,61 +87,47 @@ def coil(video_q, loops):
         print 'updating queues please wait !'
         video_download_helper(video_q, actions)
     print 'in coil spring out', video_q.empty(), start_time, datetime.now().time().replace(microsecond=0), end_time
-    while True: # not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
+    while not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
         new_video_q = video_q
         for item in actions:
             print 'in item action ==>', item.get('Action')
             if item.get('ActionId') == 2:
                 print "in transparent action"
                 glass('transparent')
-                time.sleep(4)
             elif item.get('ActionId') == 0:
-                try:
-                    print 'in wait wait call'
-                    img = cv2.imread('joker.png',0)
-                    cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
-                    cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                    start = datetime.now()
-                    interval  = item.get('Interval')*60 if item.get('IntervalType') else 1
-                    while datetime.now() - start < timedelta(seconds=interval):        
-                        cv2.imshow('image',img) 
-                        while(True):
-                            k = cv2.waitKey(3000)
-                            if k == 27:
-                                pass
-                            break
-                    cv2.destroyWindow('image')
-                    cv2.destroyAllWindows()
-                except:
-                    pass
+                print 'in wait wait call'
+                img = cv2.imread('joker.png',0)
+                cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
+                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                start = datetime.now()
+                interval  = item.get('Interval')*60 if item.get('IntervalType') else 1        
+                cv2.imshow('image',img) 
+                cv2.waitKey(interval*100)
+                cv2.destroyWindow('image')
             elif item.get('ActionId') == 1:
-                
-                try:
-                    print "in play files"
-                    movie_name = item.get('MovieFile').split('/')[-1]
-                    cap = cv2.VideoCapture(video_q.get())
-                    while(cap.isOpened()):
-                        ret, frame = cap.read()
-                        if ret == True:
-                            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                            cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
-                            cv2.setWindowProperty(
-                                "window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                            cv2.imshow('window', frame)
-                            # & 0xFF is required for a 64-bit system
-                            if cv2.waitKey(30) & 0xFF == ord('q'):
-                                break
-                        else:
+                print "in play files"
+                movie_name = item.get('MovieFile').split('/')[-1]
+                cap = cv2.VideoCapture(video_q.get())
+                while(cap.isOpened()):
+                    ret, frame = cap.read()
+                    if ret == True:
+                        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                        cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
+                        cv2.setWindowProperty(
+                            "window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                        cv2.imshow('window', frame)
+                        # & 0xFF is required for a 64-bit system
+                        if cv2.waitKey(25) & 0xFF == ord('q'):
                             break
-                    cap.release()
-                    cv2.destroyAllWindows()
-                except:
-                    pass
+                    else:
+                        break
+                cap.release()
+                cv2.destroyAllWindows()
             elif item.get('ActionId') == 3:
                 glass('opaque')
             else:
-                pass
-    coil(new_video_q, loops)
+            	pass
+        coil(new_video_q, loops)
 
 
 def get_schedule(url, data):
@@ -170,7 +155,7 @@ def ProjectorOnOff(schedulers):
                 else:
                     ProjectorOnOffSwitch(3, 'off')
                     projector_status = False
-        time.sleep(10)
+        stm.sleep(10)
 
 
 
@@ -185,7 +170,7 @@ def WemoSchedular(current_schedular, video_q, on_off_queue):
     print 'blocking on the process to complete the execution'
     video_play.join()
 
-    if datetime.strptime('2018/01/01 11:00:00 PM', '%Y/%d/%m %I:%M:%S %p').time() >  datetime.now().time().replace(microsecond=0):
+    if time(23, 00) <  datetime.now().time().replace(microsecond=0) < time(23, 59):
         for root, dirs, files in os.walk(os.getcwd() + '/vids/'):
             for f in files:
                 os.unlink(os.path.join(root, f))
@@ -213,4 +198,4 @@ if __name__ == '__main__':
         schedular = get_schedule(url, data)
         WemoSchedular(schedular, video_q, on_off_queue) 
         print "Sleeping for some rest See you Soon !"
-        time.sleep(10)
+        stm.sleep(10)
