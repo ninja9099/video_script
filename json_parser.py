@@ -21,6 +21,8 @@ from multiprocessing import Process, Queue
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(2, GPIO.OUT)
 GPIO.setup(3, GPIO.OUT)
+GPIO.output(2, GPIO.HIGH)
+GPIO.output(3, GPIO.HIGH)
 pp = pprint.PrettyPrinter()
 
 def glass(command):
@@ -81,7 +83,7 @@ def coil(video_q, loops):
         print 'updating queues please wait !'
         video_download_helper(video_q, actions)
     print 'in coil spring out', video_q.empty(), start_time, datetime.now().time().replace(microsecond=0), end_time
-    while not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
+    while True: # not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
         new_video_q = video_q
         for item in actions:
             print 'in item action ==>', item.get('Action')
@@ -89,11 +91,11 @@ def coil(video_q, loops):
                 print "in transparent action"
                 glass('transparent')
                 time.sleep(4)
-            if item.get('ActionId') == 0:
+            elif item.get('ActionId') == 0:
                 print 'in wait wait call'
                 img = cv2.imread('joker.png',0)
                 cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
-                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
+                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
                 start = datetime.now()
                 interval  = item.get('Interval')*60 if item.get('IntervalType') else 1
                 while datetime.now() - start < timedelta(seconds=interval):        
@@ -105,7 +107,7 @@ def coil(video_q, loops):
                         break
                 cv2.destroyWindow('image')
                 cv2.destroyAllWindows()
-            if item.get('ActionId') == 1:
+            elif item.get('ActionId') == 1:
                 print "in play files"
                 movie_name = item.get('MovieFile').split('/')[-1]
                 cap = cv2.VideoCapture(video_q.get())
@@ -115,7 +117,7 @@ def coil(video_q, loops):
                         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                         cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
                         cv2.setWindowProperty(
-                            "window", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
+                            "window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
                         cv2.imshow('window', frame)
                         # & 0xFF is required for a 64-bit system
                         if cv2.waitKey(30) & 0xFF == ord('q'):
@@ -124,8 +126,10 @@ def coil(video_q, loops):
                         break
                 cap.release()
                 cv2.destroyAllWindows()
-            if item.get('ActionId') == 3:
+            elif item.get('ActionId') == 3:
                 glass('opaque')
+            else:
+            	pass
         coil(new_video_q, loops)
 
 
