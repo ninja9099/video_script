@@ -33,6 +33,7 @@ def glass(command):
         GPIO.output(2, GPIO.LOW)
     elif command == "transparent":
         GPIO.output(2, GPIO.HIGH)
+        stm.sleep(5)
     return True
 
 def ProjectorOnOffSwitch(pin, state):
@@ -72,7 +73,7 @@ def video_download_helper(video_q, actions):
 def coil(video_q, loops):
     actions = []
     try:
-    	loop_schedule = loops[0]
+        loop_schedule = loops[0]
     except:
         raise Exception("No Schedulares found Exiting.....! ")
         return True
@@ -126,7 +127,7 @@ def coil(video_q, loops):
             elif item.get('ActionId') == 3:
                 glass('opaque')
             else:
-            	pass
+                pass
         coil(new_video_q, loops)
 
 
