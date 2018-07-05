@@ -97,45 +97,52 @@ def coil(video_q, loops):
                 glass('transparent')
                 time.sleep(4)
             elif item.get('ActionId') == 0:
-                print 'in wait wait call'
-                img = cv2.imread('joker.png',0)
-                cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
-                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                start = datetime.now()
-                interval  = item.get('Interval')*60 if item.get('IntervalType') else 1
-                while datetime.now() - start < timedelta(seconds=interval):        
-                    cv2.imshow('image',img) 
-                    while(True):
-                        k = cv2.waitKey(3000)
-                        if k == 27:
-                            pass
-                        break
-                cv2.destroyWindow('image')
-                cv2.destroyAllWindows()
+                try:
+	                print 'in wait wait call'
+	                img = cv2.imread('joker.png',0)
+	                cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
+	                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+	                start = datetime.now()
+	                interval  = item.get('Interval')*60 if item.get('IntervalType') else 1
+	                while datetime.now() - start < timedelta(seconds=interval):        
+	                    cv2.imshow('image',img) 
+	                    while(True):
+	                        k = cv2.waitKey(3000)
+	                        if k == 27:
+	                            pass
+	                        break
+	                cv2.destroyWindow('image')
+	                cv2.destroyAllWindows()
+	            except:
+	            	pass
             elif item.get('ActionId') == 1:
-                print "in play files"
-                movie_name = item.get('MovieFile').split('/')[-1]
-                cap = cv2.VideoCapture(video_q.get())
-                while(cap.isOpened()):
-                    ret, frame = cap.read()
-                    if ret == True:
-                        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                        cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
-                        cv2.setWindowProperty(
-                            "window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                        cv2.imshow('window', frame)
-                        # & 0xFF is required for a 64-bit system
-                        if cv2.waitKey(30) & 0xFF == ord('q'):
-                            break
-                    else:
-                        break
-                cap.release()
-                cv2.destroyAllWindows()
+                
+                try:
+                	print "in play files"
+	                movie_name = item.get('MovieFile').split('/')[-1]
+	                cap = cv2.VideoCapture(video_q.get())
+	                while(cap.isOpened()):
+	                    ret, frame = cap.read()
+	                    if ret == True:
+	                        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+	                        cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
+	                        cv2.setWindowProperty(
+	                            "window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+	                        cv2.imshow('window', frame)
+	                        # & 0xFF is required for a 64-bit system
+	                        if cv2.waitKey(30) & 0xFF == ord('q'):
+	                            break
+	                    else:
+	                        break
+	                cap.release()
+	                cv2.destroyAllWindows()
+	            except:
+	            	pass
             elif item.get('ActionId') == 3:
                 glass('opaque')
             else:
             	pass
-        coil(new_video_q, loops)
+    coil(new_video_q, loops)
 
 
 def get_schedule(url, data):
