@@ -14,7 +14,7 @@ import numpy as np
 import cv2
 import configparser
 from datetime import datetime, timedelta, time
-
+import vlc
 import R64.GPIO as GPIO
 from multiprocessing import Process, Queue
 
@@ -108,22 +108,13 @@ def coil(video_q, loops):
             elif item.get('ActionId') == 1:
                 print "in play files"
                 movie_name = item.get('MovieFile').split('/')[-1]
-                cap = cv2.VideoCapture(video_q.get())
-                while(cap.isOpened()):
-                    ret, frame = cap.read()
-                    if ret == True:
-                        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                        cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
-                        cv2.setWindowProperty(
-                            "window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                        cv2.imshow('window', frame)
-                        # & 0xFF is required for a 64-bit system
-                        if cv2.waitKey(25) & 0xFF == ord('q'):
-                            break
-                    else:
-                        break
-                cap.release()
-                cv2.destroyAllWindows()
+                player = vlc.MediaPlayer("/home/pankaj/Desktop/Video5.mp4")
+                player.set_fullscreen(True)
+                player.play()
+                stm.sleep(1)
+                while player.is_playing():
+                    pass
+                player.stop()
             elif item.get('ActionId') == 3:
                 glass('opaque')
             else:
@@ -153,9 +144,9 @@ def ProjectorOnOff(schedulers):
                     ProjectorOnOffSwitch(3, 'on')
                     print "projector is on now"
                     projector_status = True
-                else:
-                    ProjectorOnOffSwitch(3, 'off')
-                    projector_status = False
+            else:
+                ProjectorOnOffSwitch(3, 'off')
+                projector_status = False
         stm.sleep(10)
 
 
