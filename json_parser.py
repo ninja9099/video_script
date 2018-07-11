@@ -108,7 +108,7 @@ def coil(video_q, loops):
             elif item.get('ActionId') == 1:
                 print "in play files"
                 movie_name = item.get('MovieFile').split('/')[-1]
-                player = vlc.MediaPlayer("/home/pankaj/Desktop/Video5.mp4")
+                player = vlc.MediaPlayer(video_q.get())
                 player.set_fullscreen(True)
                 player.play()
                 stm.sleep(1)
