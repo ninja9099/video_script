@@ -18,6 +18,8 @@ import vlc
 import R64.GPIO as GPIO
 from multiprocessing import Process, Queue
 
+PROJECTOR_OFF = True
+
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(2, GPIO.OUT)
 GPIO.setup(3, GPIO.OUT)
@@ -87,7 +89,7 @@ def coil(video_q, loops):
         print 'updating queues please wait !'
         video_download_helper(video_q, actions)
     print 'in coil spring out', video_q.empty(), start_time, datetime.now().time().replace(microsecond=0), end_time
-    while not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
+    while True: #not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
         new_video_q = video_q
         for item in actions:
             print 'in item action ==>', item.get('Action')
@@ -99,18 +101,18 @@ def coil(video_q, loops):
                 img = cv2.imread('joker.png',0)
                 cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
                 cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
-                start = datetime.now()
-                interval  = item.get('Interval')*60 if item.get('IntervalType') else 1        
+                interval  = item.get('Interval')* (60 if item.get('IntervalType') else 1) 
+                print 'interval is ', interval
                 cv2.imshow('image',img) 
                 cv2.waitKey(interval*100)
+                stm.sleep(interval)
                 cv2.destroyWindow('image')
             elif item.get('ActionId') == 1:
                 print "in play files"
                 movie_name = item.get('MovieFile').split('/')[-1]
-                player = vlc.MediaPlayer(video_q.get())
-                # player.set_fullscreen(True)
+                player = vlc.MediaPlayer(video_q.get(), "--no-xlib")
+                player.set_fullscreen(True)
                 player.play()
-                # player.set_fullscreen(True)
                 stm.sleep(1)
                 while player.is_playing():
                     pass
@@ -127,26 +129,27 @@ def get_schedule(url, data):
     return response.json() 
 
 def ProjectorOnOff(schedulers):
-    projector_status = False
+
     for schedule in schedulers:
         for sch_action in schedule.get('WemoAction'):
-            if sch_action.get('Action') == 'Transparent':
+            if sch_action.get('ActionId') == 2:
                 projection_dates = [datetime.strptime(p_date.get('ScheduleDate'),'%d-%b-%Y %H:%M:%S').date() for p_date in schedule.get('WemoReportDates')]
                 on_time = datetime.strptime(schedule.get('SchedulerStartDate'), '%m/%d/%Y %I:%M:%S %p').time()
             else:
                 off_time = datetime.strptime(schedule.get('SchedulerStartDate'), '%m/%d/%Y %I:%M:%S %p').time()
 
-
+    print "+++++++++++++++++++++++++++++++++++++>",on_time, off_time            
     while True:
+        global PROJECTOR_OFF
         if datetime.now().date() in projection_dates:
-            if on_time <= datetime.now().time().replace(microsecond=0) <= off_time:
-                if not projector_status:
-                    ProjectorOnOffSwitch(3, 'on')
-                    print "projector is on now"
-                    projector_status = True
+            if on_time <= datetime.now().time().replace(microsecond=0) <= off_time and PROJECTOR_OFF:
+                ProjectorOnOffSwitch(3, 'on')
+                PROJECTOR_OFF = False
+                print "projector is on now"
             else:
                 ProjectorOnOffSwitch(3, 'off')
-                projector_status = False
+                PROJECTOR_OFF = True
+                print "projector is off now"
         stm.sleep(10)
 
 
@@ -180,7 +183,6 @@ if __name__ == '__main__':
             data.update({'AuthKey':config['DEFAULT'][key]})
         if key  == "locationid":
             data.update({'LocationId':config['DEFAULT'][key]})
-    print data
     internet_on()
     url = "http://rwscloud.devs-vipl.com/WebService/RWSCloudData.asmx/GetWemoScheduler"    
     video_q = Queue()
@@ -188,6 +190,4 @@ if __name__ == '__main__':
     
     while True:
         schedular = get_schedule(url, data)
-        WemoSchedular(schedular, video_q, on_off_queue) 
-        print "Sleeping for some rest See you Soon !"
-        stm.sleep(1)
+        WemoSchedular(schedular, video_q, on_off_queue)
