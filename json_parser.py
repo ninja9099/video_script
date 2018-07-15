@@ -110,7 +110,7 @@ def coil(video_q, loops):
                 player = vlc.MediaPlayer(video_q.get())
                 # player.set_fullscreen(True)
                 player.play()
-                player.set_fullscreen(True)
+                # player.set_fullscreen(True)
                 stm.sleep(1)
                 while player.is_playing():
                     pass
