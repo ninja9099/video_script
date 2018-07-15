@@ -99,7 +99,7 @@ def coil(video_q, loops):
                 print 'in wait wait call'
                 img = cv2.imread('joker.png',0)
                 cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
-                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
                 start = datetime.now()
                 interval  = item.get('Interval')*60 if item.get('IntervalType') else 1        
                 cv2.imshow('image',img) 
