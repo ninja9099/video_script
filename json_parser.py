@@ -17,6 +17,7 @@ from datetime import datetime, timedelta, time
 import vlc
 import R64.GPIO as GPIO
 from multiprocessing import Process, Queue
+from subprocess import call
 
 PROJECTOR_OFF = True
 
@@ -89,7 +90,7 @@ def coil(video_q, loops):
         print 'updating queues please wait !'
         video_download_helper(video_q, actions)
     print 'in coil spring out', video_q.empty(), start_time, datetime.now().time().replace(microsecond=0), end_time
-    while True: #not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
+    while not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
         new_video_q = video_q
         for item in actions:
             print 'in item action ==>', item.get('Action')
@@ -109,14 +110,18 @@ def coil(video_q, loops):
                 cv2.destroyWindow('image')
             elif item.get('ActionId') == 1:
                 print "in play files"
-                movie_name = item.get('MovieFile').split('/')[-1]
-                player = vlc.MediaPlayer(video_q.get(), "--no-xlib")
-                player.set_fullscreen(True)
-                player.play()
-                stm.sleep(1)
-                while player.is_playing():
-                    pass
-                player.stop()
+                # movie_name = item.get('MovieFile').split('/')[-1]
+                # player = vlc.MediaPlayer(video_q.get(), "--no-xlib")
+                # player.set_fullscreen(True)
+                # player.play()
+                # stm.sleep(1)
+                # while player.is_playing():
+                #     pass
+                # player.stop()
+                x = video_q.get()
+
+                # call(["cvlc " + x, "vlc://quit"], shell=True)
+                rtrn = os.system("vlc --fullscreen "+ x + " vlc://quit")
             elif item.get('ActionId') == 3:
                 glass('opaque')
             else:
