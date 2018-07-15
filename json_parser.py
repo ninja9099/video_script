@@ -33,7 +33,6 @@ def glass(command):
         GPIO.output(2, GPIO.LOW)
     elif command == "transparent":
         GPIO.output(2, GPIO.HIGH)
-        stm.sleep(5)
     return True
 
 def ProjectorOnOffSwitch(pin, state):
@@ -109,8 +108,9 @@ def coil(video_q, loops):
                 print "in play files"
                 movie_name = item.get('MovieFile').split('/')[-1]
                 player = vlc.MediaPlayer(video_q.get())
-                player.set_fullscreen(True)
+                # player.set_fullscreen(True)
                 player.play()
+                player.set_fullscreen(True)
                 stm.sleep(1)
                 while player.is_playing():
                     pass
@@ -190,4 +190,4 @@ if __name__ == '__main__':
         schedular = get_schedule(url, data)
         WemoSchedular(schedular, video_q, on_off_queue) 
         print "Sleeping for some rest See you Soon !"
-        stm.sleep(10)
+        stm.sleep(1)
