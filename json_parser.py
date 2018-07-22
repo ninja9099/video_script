@@ -18,6 +18,10 @@ import vlc
 import R64.GPIO as GPIO
 from multiprocessing import Process, Queue
 from subprocess import call
+from moviepy.editor import *
+import pygame
+
+
 
 PROJECTOR_OFF = True
 
@@ -90,7 +94,7 @@ def coil(video_q, loops):
         print 'updating queues please wait !'
         video_download_helper(video_q, actions)
     print 'in coil spring out', video_q.empty(), start_time, datetime.now().time().replace(microsecond=0), end_time
-    while not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
+    while True: #not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
         new_video_q = video_q
         for item in actions:
             print 'in item action ==>', item.get('Action')
@@ -101,7 +105,7 @@ def coil(video_q, loops):
                 print 'in wait wait call'
                 img = cv2.imread('joker.png',0)
                 cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
-                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
+                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
                 interval  = item.get('Interval')* (60 if item.get('IntervalType') else 1) 
                 print 'interval is ', interval
                 cv2.imshow('image',img) 
@@ -110,18 +114,15 @@ def coil(video_q, loops):
                 cv2.destroyWindow('image')
             elif item.get('ActionId') == 1:
                 print "in play files"
-                # movie_name = item.get('MovieFile').split('/')[-1]
-                # player = vlc.MediaPlayer(video_q.get(), "--no-xlib")
-                # player.set_fullscreen(True)
-                # player.play()
-                # stm.sleep(1)
-                # while player.is_playing():
-                #     pass
-                # player.stop()
-                x = video_q.get()
-
-                # call(["cvlc " + x, "vlc://quit"], shell=True)
-                rtrn = os.system("vlc --fullscreen "+ x + " vlc://quit")
+                movie_name = item.get('MovieFile').split('/')[-1]
+                cap = capture =cv2.VideoCapture(video_q.get())
+                while(cap.isOpened()):
+                    ret, frame = cap.read()
+                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    cv2.imshow('frame',gray)
+                    cv2.waitKey(20)
+                cap.release()
+                cv2.destroyAllWindows()
             elif item.get('ActionId') == 3:
                 glass('opaque')
             else:
