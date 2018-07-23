@@ -18,9 +18,6 @@ import vlc
 import R64.GPIO as GPIO
 from multiprocessing import Process, Queue
 from subprocess import call
-from moviepy.editor import *
-import pygame
-
 
 
 PROJECTOR_OFF = True
@@ -38,8 +35,10 @@ def glass(command):
     print "in glass function", command
     if command ==  "opaque":
         GPIO.output(2, GPIO.LOW)
-    elif command == "transparent":
+	stm.sleep(1)
+    if command == "transparent":
         GPIO.output(2, GPIO.HIGH)
+        stm.sleep(1)
     return True
 
 def ProjectorOnOffSwitch(pin, state):
@@ -86,35 +85,36 @@ def coil(video_q, loops):
 
     for actn in loop_schedule.get('WemoAction'):
         actions.insert(actn.get('SrNo'), actn)
+    print actions
     start_time = datetime.strptime(loop_schedule.get('SchedulerFromDate'), "%m/%d/%Y %I:%M:%S %p").time()
     end_time = datetime.strptime(loop_schedule.get('SchedulerToDate'), "%m/%d/%Y %I:%M:%S %p").time()
     projection_dates = [datetime.strptime(item.get('ScheduleDate'), '%d-%b-%Y %H:%M:%S').date() for item in loop_schedule.get('WemoReportDates')] 
-    
+
     if video_q.empty():
         print 'updating queues please wait !'
         video_download_helper(video_q, actions)
     print 'in coil spring out', video_q.empty(), start_time, datetime.now().time().replace(microsecond=0), end_time
     while True: #not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
         new_video_q = video_q
+        actions = sorted(actions, key=lambda x: x.get('SrNo'))
         for item in actions:
-            print 'in item action ==>', item.get('Action')
+            print 'in item action ==> and sequesnce number is ', item.get('Action'),item.get('SrNo')
             if item.get('ActionId') == 2:
                 print "in transparent action"
                 glass('transparent')
             elif item.get('ActionId') == 0:
-                print 'in wait wait call'
                 img = cv2.imread('joker.png',0)
                 cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
-                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
                 interval  = item.get('Interval')* (60 if item.get('IntervalType') else 1) 
-                print 'interval is ', interval
-                cv2.imshow('image',img) 
-                cv2.waitKey(interval*100)
-                stm.sleep(interval)
-                cv2.destroyWindow('image')
+                cv2.imshow('image',img)
+                cv2.waitKey(interval*1000)
+                cv2.destroyAllWindows()
+		for i in range (1,5):
+    		    cv2.waitKey(1)
             elif item.get('ActionId') == 1:
                 print "in play files"
-                movie_name = item.get('MovieFile').split('/')[-1]
+                ''' movie_name = item.get('MovieFile').split('/')[-1]
                 cap = capture =cv2.VideoCapture(video_q.get())
                 while(cap.isOpened()):
                     ret, frame = cap.read()
@@ -122,7 +122,8 @@ def coil(video_q, loops):
                     cv2.imshow('frame',gray)
                     cv2.waitKey(20)
                 cap.release()
-                cv2.destroyAllWindows()
+                cv2.destroyAllWindows()'''
+		call(['vlc --fullscreen --play-and-exit ' + video_q.get()], shell=True)
             elif item.get('ActionId') == 3:
                 glass('opaque')
             else:
