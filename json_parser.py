@@ -123,10 +123,10 @@ def coil(video_q, loops):
                     cv2.waitKey(20)
                 cap.release()
                 cv2.destroyAllWindows()'''
-		#call(['vlc --fullscreen --play-and-exit ' + video_q.get()], shell=True)
+		call(['vlc --fullscreen --play-and-exit --no-ignore-config ' + video_q.get()], shell=True)
                 #call('gst-launch-1.0 playbin uri=file://' + video_q.get() + '| video-sink=imxipuvideosink', shell=True)
-                x = video_q.get()
-		call(['mpv --fullscreen ' + x ], shell=True)
+                #x = video_q.get()
+		#call(['mpv --fullscreen ' + x ], shell=True)
 
             elif item.get('ActionId') == 3:
                 glass('opaque')
