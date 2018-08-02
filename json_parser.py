@@ -15,39 +15,39 @@ import cv2
 import configparser
 from datetime import datetime, timedelta, time
 import vlc
-import R64.GPIO as GPIO
+import ASUS.GPIO as GPIO
 from multiprocessing import Process, Queue
 from subprocess import call
 
 
 PROJECTOR_OFF = True
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(2, GPIO.OUT)
+GPIO.setmode(GPIO.BOARD)
 GPIO.setup(3, GPIO.OUT)
-GPIO.output(2, GPIO.HIGH)
+GPIO.setup(5, GPIO.OUT)
 GPIO.output(3, GPIO.HIGH)
+GPIO.output(5, GPIO.HIGH)
 pp = pprint.PrettyPrinter()
 
 def glass(command):
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(2, GPIO.OUT)
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(3, GPIO.OUT)
     print "in glass function", command
     if command ==  "opaque":
-        GPIO.output(2, GPIO.LOW)
+        GPIO.output(3, GPIO.LOW)
 	stm.sleep(1)
     if command == "transparent":
-        GPIO.output(2, GPIO.HIGH)
+        GPIO.output(3, GPIO.HIGH)
         stm.sleep(1)
     return True
 
 def ProjectorOnOffSwitch(pin, state):
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(3, GPIO.OUT)
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(5, GPIO.OUT)
     if state == 'off':
-        GPIO.output(3, GPIO.HIGH)
+        GPIO.output(5, GPIO.HIGH)
     if state == 'on':
-        GPIO.output(3, GPIO.LOW)
+        GPIO.output(5, GPIO.LOW)
     return True
 
 def internet_on():
@@ -114,8 +114,8 @@ def coil(video_q, loops):
     		    cv2.waitKey(1)
             elif item.get('ActionId') == 1:
                 print "in play files"
-                ''' movie_name = item.get('MovieFile').split('/')[-1]
-                cap = capture =cv2.VideoCapture(video_q.get())
+                movie_name = item.get('MovieFile').split('/')[-1]
+                '''cap = capture =cv2.VideoCapture(video_q.get())
                 while(cap.isOpened()):
                     ret, frame = cap.read()
                     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -123,7 +123,11 @@ def coil(video_q, loops):
                     cv2.waitKey(20)
                 cap.release()
                 cv2.destroyAllWindows()'''
-		call(['vlc --fullscreen --play-and-exit ' + video_q.get()], shell=True)
+		#call(['vlc --fullscreen --play-and-exit ' + video_q.get()], shell=True)
+                #call('gst-launch-1.0 playbin uri=file://' + video_q.get() + '| video-sink=imxipuvideosink', shell=True)
+                x = video_q.get()
+		call(['mpv --fullscreen ' + x ], shell=True)
+
             elif item.get('ActionId') == 3:
                 glass('opaque')
             else:
