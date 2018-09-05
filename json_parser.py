@@ -157,10 +157,10 @@ def ProjectorOnOff(schedulers):
                 ProjectorOnOffSwitch(3, 'on')
                 PROJECTOR_OFF = False
                 print "projector is on now"
-            else:
-                ProjectorOnOffSwitch(3, 'off')
-                PROJECTOR_OFF = True
-                print "projector is off now"
+        else:
+            ProjectorOnOffSwitch(3, 'off')
+            PROJECTOR_OFF = True
+            print "projector is off now"
         stm.sleep(10)
 
 
