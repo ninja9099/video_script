@@ -94,7 +94,7 @@ def coil(video_q, loops):
         print 'updating queues please wait !'
         video_download_helper(video_q, actions)
     print 'in coil spring out', video_q.empty(), start_time, datetime.now().time().replace(microsecond=0), end_time
-    while True: #not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
+    while not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
         new_video_q = video_q
         actions = sorted(actions, key=lambda x: x.get('SrNo'))
         for item in actions:
@@ -105,7 +105,7 @@ def coil(video_q, loops):
             elif item.get('ActionId') == 0:
                 img = cv2.imread('joker.png',0)
                 cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
-                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
+                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
                 interval  = item.get('Interval')* (60 if item.get('IntervalType') else 1) 
                 cv2.imshow('image',img)
                 cv2.waitKey(interval*1000)
@@ -151,17 +151,21 @@ def ProjectorOnOff(schedulers):
 
     print "+++++++++++++++++++++++++++++++++++++>",on_time, off_time            
     while True:
+        print "in projector on/off loop"
         global PROJECTOR_OFF
         if datetime.now().date() in projection_dates:
-            if on_time <= datetime.now().time().replace(microsecond=0) <= off_time and PROJECTOR_OFF:
-                ProjectorOnOffSwitch(3, 'on')
-                PROJECTOR_OFF = False
-                print "projector is on now"
-        else:
-            ProjectorOnOffSwitch(3, 'off')
-            PROJECTOR_OFF = True
-            print "projector is off now"
-        stm.sleep(10)
+            print "if time in beteen ===================>", on_time <= datetime.now().time().replace(microsecond=0) <= off_time
+            if on_time <= datetime.now().time().replace(microsecond=0) <= off_time:
+                if PROJECTOR_OFF:
+                    ProjectorOnOffSwitch(3, 'on')
+                    PROJECTOR_OFF = False
+                    print "projector is on now"
+            else:
+                if not PROJECTOR_OFF:
+                    ProjectorOnOffSwitch(3, 'off')
+                    PROJECTOR_OFF = True
+                    print "projector is off now"
+            stm.sleep(10)
 
 
 
