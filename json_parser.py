@@ -11,11 +11,12 @@ import urllib2
 import requests
 import multiprocessing
 import numpy as np
-import cv2
+#import cv2
 import configparser
 from datetime import datetime, timedelta, time
 import vlc
-import ASUS.GPIO as GPIO
+#import ASUS.GPIO as GPIO
+import R64.GPIO as GPIO
 from multiprocessing import Process, Queue
 from subprocess import call
 
@@ -94,7 +95,7 @@ def coil(video_q, loops):
         print 'updating queues please wait !'
         video_download_helper(video_q, actions)
     print 'in coil spring out', video_q.empty(), start_time, datetime.now().time().replace(microsecond=0), end_time
-    while not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
+    while True: #not video_q.empty() and datetime.now().time().replace(microsecond=0) >= start_time and datetime.now().time().replace(microsecond=0) < end_time:
         new_video_q = video_q
         actions = sorted(actions, key=lambda x: x.get('SrNo'))
         for item in actions:
@@ -104,27 +105,18 @@ def coil(video_q, loops):
                 glass('transparent')
             elif item.get('ActionId') == 0:
                 img = cv2.imread('joker.png',0)
-                cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
-                cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                interval  = item.get('Interval')* (60 if item.get('IntervalType') else 1) 
-                cv2.imshow('image',img)
-                cv2.waitKey(interval*1000)
-                cv2.destroyAllWindows()
-		for i in range (1,5):
-    		    cv2.waitKey(1)
+                #cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
+                #cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                #interval  = item.get('Interval')* (60 if item.get('IntervalType') else 1) 
+                #cv2.imshow('image',img)
+                #cv2.waitKey(interval*1000)
+                #cv2.destroyAllWindows()
+		#for i in range (1,5):
+    		    #cv2.waitKey(1)
             elif item.get('ActionId') == 1:
                 print "in play files"
                 movie_name = item.get('MovieFile').split('/')[-1]
-                '''cap = capture =cv2.VideoCapture(video_q.get())
-                while(cap.isOpened()):
-                    ret, frame = cap.read()
-                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    cv2.imshow('frame',gray)
-                    cv2.waitKey(20)
-                cap.release()
-                cv2.destroyAllWindows()'''
 		call(['vlc --fullscreen --play-and-exit --no-ignore-config ' + video_q.get()], shell=True)
-                #call('gst-launch-1.0 playbin uri=file://' + video_q.get() + '| video-sink=imxipuvideosink', shell=True)
                 #x = video_q.get()
 		#call(['mpv --fullscreen ' + x ], shell=True)
 
@@ -151,7 +143,7 @@ def ProjectorOnOff(schedulers):
 
     print "+++++++++++++++++++++++++++++++++++++>",on_time, off_time            
     while True:
-        print "in projector on/off loop"
+        #print "in projector on/off loop"
         global PROJECTOR_OFF
         if datetime.now().date() in projection_dates:
             print "if time in beteen ===================>", on_time <= datetime.now().time().replace(microsecond=0) <= off_time
