@@ -1,0 +1,11 @@
+#ASUS.GPIO==0.1
+certifi==2018.4.16
+chardet==3.0.4
+configparser==3.5.0
+decorator==4.0.11
+idna==2.7
+#numpy==1.12.1
+python-vlc==3.0.102
+requests==2.19.1
+#scipy==0.18.1
+urllib3==1.23
